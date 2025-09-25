@@ -3,6 +3,7 @@ import {
   listPurchaseOrders,
   createPurchaseOrder,
   deletePurchaseOrder,
+  updatePurchaseOrder,
 } from "../api/PurchaseOrder";
 
 // Fetch list
@@ -18,11 +19,9 @@ export function usePurchaseOrders(filters: any) {
 // Create new PO
 export function useCreatePurchaseOrder() {
   const queryClient = useQueryClient();
-  
   return useMutation({
     mutationFn: createPurchaseOrder,
     onSuccess: () => {
-      // Invalidate and refetch purchase orders queries
       queryClient.invalidateQueries({ queryKey: ["purchaseOrders"] });
     },
   });
@@ -30,7 +29,23 @@ export function useCreatePurchaseOrder() {
 
 // Delete PO
 export function useDeletePurchaseOrder() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deletePurchaseOrder,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchaseOrders"] });
+    },
+  });
+}
+
+// ✅ Update PO
+export function useUpdatePurchaseOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) =>
+      updatePurchaseOrder(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchaseOrders"] });
+    },
   });
 }

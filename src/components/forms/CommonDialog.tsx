@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import Autocomplete from './Autocomplete';
 
 // Field types
-export type FieldType = 'text' | 'number' | 'date' | 'email' | 'password' | 'select';
+export type FieldType = 'text' | 'number' | 'date' | 'email' | 'password' | 'select' | 'autocomplete';
 
 // Field configuration interface
 export interface FieldConfig {
@@ -106,6 +107,48 @@ const FloatingSelect: React.FC<{
           </option>
         ))}
       </select>
+      <label
+        htmlFor={id}
+        className={
+          `absolute left-4 font-normal -top-3 bg-white text-sm transition-all px-1
+           peer-placeholder-shown:text-base peer-placeholder-shown:text-[#6B778C] peer-placeholder-shown:top-4 peer-placeholder-shown:left-4 peer-placeholder-shown:px-0
+           peer-focus:-top-3 peer-focus:left-4 peer-focus:text-sm peer-focus:text-[#334155] peer-focus:px-1 ` +
+          (isFilled 
+            ? '-top-3 left-4 text-sm text-[#334155] px-1' 
+            : 'top-4 left-4 text-base text-[#6B778C] px-0'
+          )
+        }
+      >
+        {label}
+      </label>
+      {error && (
+        <p className="text-red-500 text-xs mt-1">{error}</p>
+      )}
+    </div>
+  );
+};
+
+// Reusable floating-label autocomplete wrapper
+const FloatingAutocomplete: React.FC<{
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  error?: string;
+}> = ({ id, label, value, onChange, placeholder = '', error }) => {
+  const isFilled = value && value.length > 0;
+
+  return (
+    <div className="relative">
+      <Autocomplete
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder || ' '}
+        className={`peer w-full px-3 pt-4 pb-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+          error ? 'border-red-300' : 'border-gray-300'
+        }`}
+      />
       <label
         htmlFor={id}
         className={
@@ -248,6 +291,18 @@ const CommonDialog: React.FC<DialogConfig> = ({
                       value={formData[field.id] || ''}
                       onChange={(value) => handleFieldChange(field.id, value)}
                       options={field.options || []}
+                      error={errors[field.id]}
+                    />
+                  );
+                } else if (field.type === 'autocomplete') {
+                  return (
+                    <FloatingAutocomplete
+                      key={field.id}
+                      id={field.id}
+                      label={field.label}
+                      value={formData[field.id] || ''}
+                      onChange={(value) => handleFieldChange(field.id, value)}
+                      placeholder={field.placeholder}
                       error={errors[field.id]}
                     />
                   );

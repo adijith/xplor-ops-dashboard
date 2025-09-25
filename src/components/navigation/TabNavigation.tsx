@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ChevronDown, Calendar } from 'lucide-react';
 import AddNewPO from '../forms/AddNewPO';
+import BusWiseDialog from '../forms/BusWiseDialog';
 import { downloadPurchaseOrdersExcel } from '../../api/PurchaseOrder';
 
 interface TabNavigationProps {
@@ -11,10 +11,7 @@ interface TabNavigationProps {
 
 const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, setActiveTab, setSearchQuery }) => {
   const [isAddPODialogOpen, setIsAddPODialogOpen] = useState(false);
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState('');
-  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [isBusWiseDialogOpen, setIsBusWiseDialogOpen] = useState(false);
 
   const tabs = [
     { id: 'purchase-order', label: 'Purchase Order' },
@@ -120,12 +117,29 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, setActiveTab, 
                   </svg>
                 </div>
               </div>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setIsBusWiseDialogOpen(true)}
+                  className="px-4 py-2 bg-gray-800 text-white text-xs font-regular rounded-lg hover:bg-gray-700"
+                >
+                  View Bus Wise Data
+                </button>
+        
+              </div>
             </div>
           )}
         </div>
       </div>
 
       <AddNewPO isOpen={isAddPODialogOpen} onClose={() => setIsAddPODialogOpen(false)} />
+      <BusWiseDialog 
+        isOpen={isBusWiseDialogOpen} 
+        onClose={() => setIsBusWiseDialogOpen(false)}
+        onSubmitData={(data) => {
+          console.log('Bus wise data submitted:', data);
+          // Handle the submitted data here
+        }}
+      />
     </>
   );
 };
