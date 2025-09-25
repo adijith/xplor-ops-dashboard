@@ -29,7 +29,7 @@ const districts = [
 const PurchaseOrderTable: React.FC<PurchaseOrderTableProps> = ({
   searchQuery = "",
 }) => {
-  const { data, isLoading, isError } = usePurchaseOrders({ page: 1, limit: 25 });
+  const { data, isLoading, isError } = usePurchaseOrders();
   const updatePO = useUpdatePurchaseOrder();
 
   const [editingId, setEditingId] = useState<number | null>(null);

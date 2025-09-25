@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: () => void;
   logout: () => void;
   userDetails: any | null;
@@ -15,6 +16,7 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [userDetails, setUserDetails] = useState<any | null>(null);
 
   useEffect(() => {
@@ -32,6 +34,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       }
     }
+    
+    // Set loading to false after checking authentication
+    setIsLoading(false);
   }, []);
 
   const login = () => {
@@ -56,7 +61,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout, userDetails }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, login, logout, userDetails }}>
       {children}
     </AuthContext.Provider>
   );

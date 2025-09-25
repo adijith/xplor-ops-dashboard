@@ -7,11 +7,11 @@ import {
 } from "../api/PurchaseOrder";
 
 // Fetch list
-export function usePurchaseOrders(filters: any) {
+export function usePurchaseOrders() {
   return useQuery({
-    queryKey: ["purchaseOrders", filters],
-    queryFn: () => listPurchaseOrders(filters),
-    staleTime: 1000 * 60 * 1, 
+    queryKey: ["purchaseOrders", ],
+    queryFn: () => listPurchaseOrders(),
+    staleTime: 1000 * 60 * 10, 
     refetchOnWindowFocus: true,
   });
 }

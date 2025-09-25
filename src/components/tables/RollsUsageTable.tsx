@@ -126,7 +126,7 @@ const RollsUsageTable: React.FC<RollsUsageTableProps> = ({
                     });
                   }
                   setActiveTab && setActiveTab("rolls-usage-by-owner");
-                }}
+                }}                
               >
                 <td className="px-6 py-4 text-sm font-medium text-gray-900">
                   {row.owner_name}

@@ -22,8 +22,8 @@ const MainContent: React.FC<MainContentProps> = ({ activeTab, setActiveTab,}) =>
         return <PurchaseOrderTable searchQuery={searchQuery}/>;
       case 'rolls-usage':
         return <RollsUsageTable setActiveTab={setActiveTab} searchQuery={searchQuery} setSelectedOwnerData={setSelectedOwnerData} />;
-      case 'rolls-usage-by-owner':
-        return <RollsUsageTableByOwner selectedOwnerData={selectedOwnerData} />;
+        case "rolls-usage-by-owner":
+          return <RollsUsageTableByOwner ownerId={selectedOwnerData ? parseInt(selectedOwnerData.owner_id) : null} />;        
       default:
         return <PurchaseOrderTable />;
     }

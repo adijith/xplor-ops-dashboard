@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import AddNewPO from '../forms/AddNewPO';
 import BusWiseDialog from '../forms/BusWiseDialog';
+import PaperRollDialog from '../forms/PaperRollData';
 import { downloadPurchaseOrdersExcel } from '../../api/PurchaseOrder';
 
 interface TabNavigationProps {
@@ -9,9 +10,28 @@ interface TabNavigationProps {
   setSearchQuery: (query: string) => void;
 }
 
+interface TicketCountData {
+  owner_id: number;
+  owner_name: string;
+  date_range: {
+    from_date: string;
+    to_date: string;
+  };
+  total_tickets: number;
+  total_vehicles: number;
+  vehicle_breakdown: Array<{
+    vehicle_id: number;
+    vehicle_number: string;
+    vehicle_name: string;
+    ticket_count: number;
+  }>;
+}
+
 const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, setActiveTab, setSearchQuery }) => {
   const [isAddPODialogOpen, setIsAddPODialogOpen] = useState(false);
   const [isBusWiseDialogOpen, setIsBusWiseDialogOpen] = useState(false);
+  const [isPaperRollDialogOpen, setIsPaperRollDialogOpen] = useState(false);
+  const [paperRollData, setPaperRollData] = useState<TicketCountData | undefined>();
 
   const tabs = [
     { id: 'purchase-order', label: 'Purchase Order' },
@@ -44,7 +64,10 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, setActiveTab, 
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setSearchQuery(''); // Clear search when switching tabs
+                }}
                 className={`pb-2 px-1 text-sm font-medium transition-colors ${
                   activeTab === tab.id
                     ? 'text-black border-b-2 border-black'
@@ -135,10 +158,20 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, setActiveTab, 
       <BusWiseDialog 
         isOpen={isBusWiseDialogOpen} 
         onClose={() => setIsBusWiseDialogOpen(false)}
-        onSubmitData={(data) => {
+        onSubmitData={(data: TicketCountData) => {
           console.log('Bus wise data submitted:', data);
-          // Handle the submitted data here
+          setPaperRollData(data);
+          setIsPaperRollDialogOpen(true);
         }}
+      />
+      
+      <PaperRollDialog 
+        isOpen={isPaperRollDialogOpen}
+        onClose={() => {
+          setIsPaperRollDialogOpen(false);
+          setPaperRollData(undefined);
+        }}
+        data={paperRollData}
       />
     </>
   );

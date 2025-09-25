@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import Autocomplete from './Autocomplete';
+import DistrictAutocomplete from './DistrictAutocomplete';
+import DistrictFilteredAutocomplete from './DistrictFilteredAutocomplete';
+import { useRollsUsageSummary } from '../../hooks/UseRollsUsage';
 
 // Field types
-export type FieldType = 'text' | 'number' | 'date' | 'email' | 'password' | 'select' | 'autocomplete';
+export type FieldType = 'text' | 'number' | 'date' | 'email' | 'password' | 'select' | 'autocomplete' | 'district-autocomplete' | 'district-filtered-autocomplete';
 
 // Field configuration interface
 export interface FieldConfig {
@@ -14,7 +17,8 @@ export interface FieldConfig {
   options?: { value: string; label: string }[]; // For select fields
   defaultValue?: string;
   required?: boolean;
-  validation?: (value: string) => string | null; // Returns error message or null
+  validation?: (value: string, formData?: Record<string, string>) => string | null; // Returns error message or null
+  min?: string; // For date fields - minimum date
 }
 
 // Dialog configuration interface
@@ -43,7 +47,8 @@ const FloatingInput: React.FC<{
   type?: string;
   placeholder?: string;
   error?: string;
-}> = ({ id, label, value, onChange, type = 'text', placeholder = '', error }) => {
+  min?: string;
+}> = ({ id, label, value, onChange, type = 'text', placeholder = '', error, min }) => {
   const isFilled = value && value.length > 0;
 
   return (
@@ -54,6 +59,7 @@ const FloatingInput: React.FC<{
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder || ' '}
+        min={min}
         className={`peer w-full px-3 pt-4 pb-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none flex items-center ${
           error ? 'border-red-300' : 'border-gray-300'
         }`}
@@ -170,6 +176,92 @@ const FloatingAutocomplete: React.FC<{
   );
 };
 
+// Reusable floating-label district autocomplete wrapper
+const FloatingDistrictAutocomplete: React.FC<{
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  error?: string;
+}> = ({ id, label, value, onChange, placeholder = '', error }) => {
+  const isFilled = value && value.length > 0;
+
+  return (
+    <div className="relative">
+      <DistrictAutocomplete
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder || ' '}
+        className={`peer w-full px-3 pt-4 pb-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+          error ? 'border-red-300' : 'border-gray-300'
+        }`}
+      />
+      <label
+        htmlFor={id}
+        className={
+          `absolute left-4 font-normal -top-3 bg-white text-sm transition-all px-1
+           peer-placeholder-shown:text-base peer-placeholder-shown:text-[#6B778C] peer-placeholder-shown:top-4 peer-placeholder-shown:left-4 peer-placeholder-shown:px-0
+           peer-focus:-top-3 peer-focus:left-4 peer-focus:text-sm peer-focus:text-[#334155] peer-focus:px-1 ` +
+          (isFilled 
+            ? '-top-3 left-4 text-sm text-[#334155] px-1' 
+            : 'top-4 left-4 text-base text-[#6B778C] px-0'
+          )
+        }
+      >
+        {label}
+      </label>
+      {error && (
+        <p className="text-red-500 text-xs mt-1">{error}</p>
+      )}
+    </div>
+  );
+};
+
+// Reusable floating-label district filtered autocomplete wrapper
+const FloatingDistrictFilteredAutocomplete: React.FC<{
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  error?: string;
+  selectedDistrict?: string;
+}> = ({ id, label, value, onChange, placeholder = '', error, selectedDistrict }) => {
+  const isFilled = value && value.length > 0;
+
+  return (
+    <div className="relative">
+      <DistrictFilteredAutocomplete
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder || ' '}
+        className={`peer w-full px-3 pt-4 pb-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+          error ? 'border-red-300' : 'border-gray-300'
+        }`}
+        selectedDistrict={selectedDistrict}
+      />
+      <label
+        htmlFor={id}
+        className={
+          `absolute left-4 font-normal -top-3 bg-white text-sm transition-all px-1
+           peer-placeholder-shown:text-base peer-placeholder-shown:text-[#6B778C] peer-placeholder-shown:top-4 peer-placeholder-shown:left-4 peer-placeholder-shown:px-0
+           peer-focus:-top-3 peer-focus:left-4 peer-focus:text-sm peer-focus:text-[#334155] peer-focus:px-1 ` +
+          (isFilled 
+            ? '-top-3 left-4 text-sm text-[#334155] px-1' 
+            : 'top-4 left-4 text-base text-[#6B778C] px-0'
+          )
+        }
+      >
+        {label}
+      </label>
+      {error && (
+        <p className="text-red-500 text-xs mt-1">{error}</p>
+      )}
+    </div>
+  );
+};
+
 // Main reusable dialog component
 const CommonDialog: React.FC<DialogConfig> = ({
   title,
@@ -186,6 +278,9 @@ const CommonDialog: React.FC<DialogConfig> = ({
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const isInitializedRef = useRef(false);
+  
+  // Get rolls usage data for owner-to-district lookup
+  const { data: rollsUsageData } = useRollsUsageSummary();
 
   // Initialize form data when dialog opens for the first time
   useEffect(() => {
@@ -215,10 +310,48 @@ const CommonDialog: React.FC<DialogConfig> = ({
   }, [message, fields]);
 
   const handleFieldChange = (fieldId: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [fieldId]: value
-    }));
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [fieldId]: value
+      };
+
+      // If district field changes, clear the owner field
+      if (fieldId === 'district') {
+        newData.ownerName = '';
+      }
+
+      // If owner name is selected and district is empty, auto-fill district
+      if (fieldId === 'ownerName' && value && !prev.district && rollsUsageData?.data?.owners) {
+        const owners = rollsUsageData.data.owners;
+        const matchingOwners = owners.filter((owner: any) => owner.owner_name === value);
+        
+        // Only auto-fill if there's exactly one matching owner (no duplicates)
+        if (matchingOwners.length === 1) {
+          newData.district = matchingOwners[0].district_name;
+        }
+        // If there are multiple owners with the same name from different districts, don't auto-fill
+      }
+
+      // If start date changes, only update end date if it becomes invalid
+      if (fieldId === 'startDate') {
+        const currentEndDate = prev.endDate;
+        if (currentEndDate) {
+          const startDate = new Date(value);
+          const endDate = new Date(currentEndDate);
+          
+          // Only update end date if it's before the new start date
+          if (endDate < startDate) {
+            newData.endDate = value;
+          }
+        } else {
+          // If no end date is set, set it to the start date
+          newData.endDate = value;
+        }
+      }
+
+      return newData;
+    });
 
     // Clear error when user starts typing
     if (errors[fieldId]) {
@@ -242,9 +375,9 @@ const CommonDialog: React.FC<DialogConfig> = ({
         return;
       }
 
-      // Custom validation
+      // Custom validation (now supports cross-field validation)
       if (field.validation && value) {
-        const validationError = field.validation(value);
+        const validationError = field.validation(value, formData);
         if (validationError) {
           newErrors[field.id] = validationError;
         }
@@ -306,7 +439,37 @@ const CommonDialog: React.FC<DialogConfig> = ({
                       error={errors[field.id]}
                     />
                   );
+                } else if (field.type === 'district-autocomplete') {
+                  return (
+                    <FloatingDistrictAutocomplete
+                      key={field.id}
+                      id={field.id}
+                      label={field.label}
+                      value={formData[field.id] || ''}
+                      onChange={(value) => handleFieldChange(field.id, value)}
+                      placeholder={field.placeholder}
+                      error={errors[field.id]}
+                    />
+                  );
+                } else if (field.type === 'district-filtered-autocomplete') {
+                  return (
+                    <FloatingDistrictFilteredAutocomplete
+                      key={field.id}
+                      id={field.id}
+                      label={field.label}
+                      value={formData[field.id] || ''}
+                      onChange={(value) => handleFieldChange(field.id, value)}
+                      placeholder={field.placeholder}
+                      error={errors[field.id]}
+                      selectedDistrict={formData.district}
+                    />
+                  );
                 } else {
+                  // For end date field, set min to start date if available
+                  const minValue = field.id === 'endDate' && formData.startDate 
+                    ? formData.startDate 
+                    : field.min;
+                  
                   return (
                     <FloatingInput
                       key={field.id}
@@ -317,6 +480,7 @@ const CommonDialog: React.FC<DialogConfig> = ({
                       type={field.type}
                       placeholder={field.placeholder}
                       error={errors[field.id]}
+                      min={minValue}
                     />
                   );
                 }
