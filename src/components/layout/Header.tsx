@@ -7,7 +7,6 @@ const Header = () => {
         <h1 className="text-xl font-semibold text-gray-900 font-inter">
           Paper Roll Management
         </h1>
-        
       </div>
     </header>
   );

@@ -1,169 +1,171 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import CommonDialog, { DialogConfig } from './CommonDialog';
+import { useCreatePurchaseOrder } from "../../hooks/UsePurchaseOrders";
 
-interface ExportDialogProps {
+
+interface AddNewPODialogProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-/** Reusable floating-label text input */
-const FloatingInput: React.FC<{
-  id: string;
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  type?: string;
-  placeholder?: string;
-}> = ({ id, label, value, onChange, type = 'text', placeholder = '' }) => {
-  const isFilled = value && value.length > 0;
-
-  return (
-    <div className="relative">
-      <input
-        id={id}
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder || ' '}
-        className="peer w-full px-3 pt-4 pb-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none flex items-center"
-      />
-      <label
-        htmlFor={id}
-        className={
-          `absolute left-4 font-normal -top-3 bg-white text-[#334155] text-sm transition-all
-           peer-placeholder-shown:text-base peer-placeholder-shown:text-[#6B778C] peer-placeholder-shown:top-4 peer-placeholder-shown:left-4 
-           peer-focus:-top-3 peer-focus:left-4 peer-focus:text-sm peer-focus:text-[#334155] ` +
-          (isFilled ? '-top-3 left-4 text-sm text-[#334155]' : 'top-4 left-4 text-base text-[#6B778C]')
-        }
-      >
-        {label}
-      </label>
-    </div>
-  );
+// Custom validation functions
+const validatePONumber = (value: string): string | null => {
+  if (value.length < 3) {
+    return 'PO Number must be at least 3 characters';
+  }
+  return null;
 };
 
-/** Reusable floating-label select */
-const FloatingSelect: React.FC<{
-  id: string;
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  children: React.ReactNode; // <option>...</option>
-}> = ({ id, label, value, onChange, children }) => {
-  const isFilled = value && value.length > 0;
-
-  return (
-    <div className="relative">
-      <select
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="peer w-full px-3 pt-4 pb-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none flex items-center"
-      >
-        {/* Empty option to support placeholder state if you ever pass empty string */}
-        <option value="" disabled hidden></option>
-        {children}
-      </select>
-      <label
-        htmlFor={id}
-        className={
-          `absolute left-4 font-normal -top-3 bg-white text-[#334155] text-sm transition-all
-           peer-placeholder-shown:text-base peer-placeholder-shown:text-[#6B778C] peer-placeholder-shown:top-4 peer-placeholder-shown:left-4 
-           peer-focus:-top-3 peer-focus:left-4 peer-focus:text-sm peer-focus:text-[#334155] ` +
-          (isFilled ? '-top-3 left-4 text-sm text-[#334155]' : 'top-4 left-4 text-base text-[#6B778C]')
-        }
-      >
-        {label}
-      </label>
-    </div>
-  );
+const validateRollCount = (value: string): string | null => {
+  const num = parseInt(value);
+  if (isNaN(num) || num <= 0) {
+    return 'Number of rolls must be a positive number';
+  }
+  return null;
 };
 
-const ExportDialog: React.FC<ExportDialogProps> = ({ isOpen, onClose }) => {
-  const [purchaseOrderNumber, setPurchaseOrderNumber] = useState('');
-  const [district, setDistrict] = useState('Kannur');
-  const [numberOfRolls, setNumberOfRolls] = useState('');
-  const [receivedDate, setReceivedDate] = useState('12/12/2025');
+const validateReceivedDate = (value: string): string | null => {
+  const date = new Date(value);
+  if (isNaN(date.getTime())) {
+    return 'Received Date must be a valid date';
+  }
+  return null;
+};
 
+const AddNewPODialog: React.FC<AddNewPODialogProps> = ({ isOpen, onClose }) => {
+  const createPurchaseOrderMutation = useCreatePurchaseOrder();
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | undefined>();
+  
+  // Clear message when dialog opens/closes
   useEffect(() => {
-    if (isOpen) {
-      setPurchaseOrderNumber('');
-      setDistrict('Kannur');
-      setNumberOfRolls('');
-      setReceivedDate('12/12/2025');
+    if (!isOpen) {
+      setMessage(undefined);
     }
   }, [isOpen]);
+  
+  // Get current date in YYYY-MM-DD format for HTML date input
+  const getCurrentDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+  
+  const getDistrictId = (districtName: string): string => {
+    const districtMap: Record<string, string> = {
+      'Alappuzha': '4',
+      'Thrissur': '8',
+      'Kozhikode': '11',
+      'Kollam': '2',
+      'Kannur': '13',
+      'Pathanamthitta': '3',
+      'Kottayam': '5',
+      'Idukki': '6',
+      'Ernakulam': '7',
+      'Thiruvananthapuram': '1',
+      'Palakkad': '9',
+      'Malappuram': '10',
+      'Wayanad': '12',
+      'Kasaragod': '14',
+    };
+    return districtMap[districtName] || districtName;
+  };
+  
+  const handleSubmit = async (data: Record<string, string>) => {
+    // Clear any previous messages
+    setMessage(undefined);
+    
+    try {
+      // Build payload to match API contract
+      const payload = {
+        po_no: data.purchaseOrderNumber,
+        district_id: Number(getDistrictId(data.district)), // ✅ convert district name → ID
+        purchased_count: Number(data.numberOfRolls),   // ✅ ensure number
+        received_date: data.receivedDate ,  // optional if backend supports
+      };
+  
+      console.log("Creating new PO...", payload);
+  
+      // Use mutation hook - this will automatically refetch data on success
+      const response = await createPurchaseOrderMutation.mutateAsync(payload);
 
-  const handleExport = () => {
-    console.log('Adding new PO...', { purchaseOrderNumber, district, numberOfRolls, receivedDate });
-    onClose();
+      console.log("Response...", response);
+  
+      if (response.message === "Purchase order created successfully" || response.data) {
+        setMessage({ type: 'success', text: 'Purchase order created successfully!' });
+        // Close dialog after 2 seconds on success
+        setTimeout(() => {
+          onClose();
+        }, 5000);
+      } else {
+        setMessage({ type: 'error', text: 'Failed to create purchase order: ' + response.message });
+      }
+    } catch (err: any) {
+      console.error("Error creating purchase order:", err);
+      setMessage({ type: 'error', text: 'Something went wrong. Please try again.' });
+    }
   };
 
-  if (!isOpen) return null;
+  // Dialog configuration for Add New Purchase Order
+  const dialogConfig: DialogConfig = {
+    title: 'Add New Purchase Order',
+    isOpen,
+    onClose,
+    onSubmit: handleSubmit,
+    submitButtonText: createPurchaseOrderMutation.isPending ? 'Saving...' : 'Save',
+    isLoading: createPurchaseOrderMutation.isPending,
+    message: message,
+    width: '800px',
+    height: '361px',
+    fields: [
+      {
+        id: 'purchaseOrderNumber',
+        label: 'Purchase Order Number',
+        type: 'text',
+        required: true,
+        validation: validatePONumber,
+      },
+      {
+        id: 'district',
+        label: 'District',
+        type: 'select',
+        required: true,
+        defaultValue: 'Alappuzha',
+        options: [
+          { value: 'Alappuzha', label: 'Alappuzha' },
+          { value: 'Thrissur', label: 'Thrissur' },
+          { value: 'Kozhikode', label: 'Kozhikode' },
+          { value: 'Kollam', label: 'Kollam' },
+          { value: 'Kannur', label: 'Kannur' },
+          { value: 'Pathanamthitta', label: 'Pathanamthitta' },
+          { value: 'Kottayam', label: 'Kottayam' },
+          { value: 'Idukki', label: 'Idukki' },
+          { value: 'Ernakulam', label: 'Ernakulam' },
+          { value: 'Thiruvananthapuram', label: 'Thiruvananthapuram' },
+          { value: 'Palakkad', label: 'Palakkad' },
+          { value: 'Malappuram', label: 'Malappuram' },
+          { value: 'Wayanad', label: 'Wayanad' },
+          { value: 'Kasaragod', label: 'Kasaragod' },
+        ],
+        
+      },
+      {
+        id: 'numberOfRolls',
+        label: 'Number of Rolls',
+        type: 'number',
+        required: true,
+        validation: validateRollCount,
+      },
+      {
+        id: 'receivedDate',
+        label: 'Received Date',
+        type: 'date',
+        required: true,
+        defaultValue: getCurrentDate(),
+        validation: validateReceivedDate,
+      },
+    ],
+  };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl shadow-xl w-[800px] h-[361px] p-8 ml-8 font-inter">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-semibold text-gray-800">Add New Purchase Order</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Form */}
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <FloatingInput
-              id="purchaseOrderNumber"
-              label="Purchase Order Number"
-              value={purchaseOrderNumber}
-              onChange={setPurchaseOrderNumber}
-              type="text"
-            />
-            <FloatingSelect
-              id="district"
-              label="District"
-              value={district}
-              onChange={setDistrict}
-            >
-              <option value="Kannur">Kannur</option>
-              <option value="Kochi">Kochi</option>
-              <option value="Thiruvananthapuram">Thiruvananthapuram</option>
-              <option value="Kozhikode">Kozhikode</option>
-            </FloatingSelect>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <FloatingInput
-              id="numberOfRolls"
-              label="Number of Rolls"
-              value={numberOfRolls}
-              onChange={setNumberOfRolls}
-              type="number"
-            />
-
-            <FloatingInput
-              id="receivedDate"
-              label="Received Date"
-              value={receivedDate}
-              onChange={setReceivedDate}
-              type="text"
-            />
-          </div>
-        </div>
-
-        <div className="mt-12 flex justify-end">
-          <button
-            onClick={handleExport}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg w-[232px] h-[48px]"
-          >
-            Save
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  return <CommonDialog {...dialogConfig} />;
 };
 
-export default ExportDialog;
+export default AddNewPODialog;  

@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import StatsCards from '../cards/StatsCards';
 import TabNavigation from '../navigation/TabNavigation';
-import DeliveryStatusTable from '../tables/PurchaseOrderTable';
 import RollsUsageTable from '../tables/RollsUsageTable';
 import RollsUsageTableByOwner from '../tables/RollsUsageTableByOwner';
 import PurchaseOrderTable from '../tables/PurchaseOrderTable';
@@ -11,15 +10,20 @@ interface MainContentProps {
   setActiveTab: (tab: string) => void;
 }
 
-const MainContent: React.FC<MainContentProps> = ({ activeTab, setActiveTab }) => {
+const MainContent: React.FC<MainContentProps> = ({ activeTab, setActiveTab,}) => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedOwnerData, setSelectedOwnerData] = useState<{
+    owner_id: string;
+  } | null>(null);
+  
   const renderTable = () => {
     switch (activeTab) {
       case 'purchase-order':
-        return <PurchaseOrderTable />;
+        return <PurchaseOrderTable searchQuery={searchQuery}/>;
       case 'rolls-usage':
-        return <RollsUsageTable setActiveTab={setActiveTab} />;
+        return <RollsUsageTable setActiveTab={setActiveTab} searchQuery={searchQuery} setSelectedOwnerData={setSelectedOwnerData} />;
       case 'rolls-usage-by-owner':
-        return <RollsUsageTableByOwner />;
+        return <RollsUsageTableByOwner selectedOwnerData={selectedOwnerData} />;
       default:
         return <PurchaseOrderTable />;
     }
@@ -30,7 +34,7 @@ const MainContent: React.FC<MainContentProps> = ({ activeTab, setActiveTab }) =>
       <div className="max-w-7xl mx-auto space-y-6">
         <StatsCards />
         <div className="bg-white rounded-xl overflow-hidden">
-          <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+          <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} setSearchQuery={setSearchQuery} />
           <div className="pt-2 pb-8 px-6">
             {renderTable()}
           </div>

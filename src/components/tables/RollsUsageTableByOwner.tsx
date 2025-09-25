@@ -1,9 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronRight } from 'lucide-react';
 
-const RollsUsageTable = () => {
+interface RollsUsageTableByOwnerProps {
+  selectedOwnerData?: {
+    owner_id: string;
+  } | null;
+}
+
+const RollsUsageTableByOwner: React.FC<RollsUsageTableByOwnerProps> = ({ selectedOwnerData }) => {
   const [isAtBottom, setIsAtBottom] = useState(false);
   const scrollContainerRef = useRef(null);
+
+  // Log the received data for debugging
+  useEffect(() => {
+    if (selectedOwnerData) {
+      console.log('Selected Owner Data:', selectedOwnerData);
+      console.log('Owner ID:', selectedOwnerData.owner_id);
+    }
+  }, [selectedOwnerData]);
 
   const data = [
     {
@@ -127,15 +141,7 @@ const RollsUsageTable = () => {
     setIsAtBottom(isBottom);
   };
 
-  const getWastageColor = (wastage: number) => {
-    if (wastage < 20) {
-      // low wastage → light pink bg, dark pink text
-      return "bg-[#FDE8ED] text-[#E7164C]";
-    } else {
-      // high wastage → red (example)
-      return "bg-[#E7FDF8] text-[#13A579]";
-    }
-  };
+
   
   useEffect(() => {
     const container = scrollContainerRef.current as HTMLDivElement | null;
@@ -210,4 +216,4 @@ const RollsUsageTable = () => {
   );
 };
 
-export default RollsUsageTable;
+export default RollsUsageTableByOwner;
