@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import AddNewPO from '../forms/AddNewPO';
 import BusWiseDialog from '../forms/BusWiseDialog';
 import PaperRollDialog from '../forms/PaperRollData';
-import { downloadPurchaseOrdersExcel } from '../../api/PurchaseOrder';
+import { downloadPurchaseOrdersExcel, downloadHandoverDetailsExcel } from '../../api/PurchaseOrder';
 
 interface TabNavigationProps {
   activeTab: string;
@@ -32,7 +32,11 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, setActiveTab, 
   const [isBusWiseDialogOpen, setIsBusWiseDialogOpen] = useState(false);
   const [isPaperRollDialogOpen, setIsPaperRollDialogOpen] = useState(false);
   const [paperRollData, setPaperRollData] = useState<TicketCountData | undefined>();
-  const [isExporting, setIsExporting] = useState(false);
+  const [isExportingPO, setIsExportingPO] = useState(false);
+  const [isExportingHandover, setIsExportingHandover] = useState(false);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
 
   const tabs = [
     { id: 'purchase-order', label: 'Purchase Order' },
@@ -41,24 +45,55 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, setActiveTab, 
   ];
 
   // ✅ Handle Excel download
-  const handleExport = async () => {
-    setIsExporting(true);
-    try {
-      const blob = await downloadPurchaseOrdersExcel();
-      const url = window.URL.createObjectURL(new Blob([blob]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "purchase_orders.xlsx"); // file name
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (err) {
-      console.error("Failed to download Excel:", err);
-      alert("Failed to export data. Please try again.");
-    } finally {
-      setIsExporting(false);
-    }
-  };
+    const handleExport = async () => {
+      setIsExportingPO(true);
+      try {
+        const blob = await downloadPurchaseOrdersExcel();
+        const url = window.URL.createObjectURL(new Blob([blob]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", "purchase_orders.xlsx"); // file name
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } catch (err) {
+        console.error("Failed to download Excel:", err);
+        alert("Failed to export data. Please try again.");
+      } finally {
+        setIsExportingPO(false);
+      }
+    };
+
+    const handleExportHandOver = () => {
+      setIsDatePickerOpen(true);
+    };
+
+    const handleDatePickerSubmit = async () => {
+      if (!fromDate || !toDate) {
+        alert("Please select both start and end dates.");
+        return;
+      }
+      
+      setIsDatePickerOpen(false);
+      setIsExportingHandover(true);
+      try {
+        const blob = await downloadHandoverDetailsExcel(fromDate, toDate);
+        const url = window.URL.createObjectURL(new Blob([blob]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", "handover_data.xlsx"); // file name
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } catch (err) {
+        console.error("Failed to download Excel:", err);
+        alert("Failed to export data. Please try again.");
+      } finally {
+        setIsExportingHandover(false);
+        setFromDate('');
+        setToDate('');
+      }
+    };
 
   return (
     <>
@@ -102,20 +137,37 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, setActiveTab, 
               <div className="flex items-center space-x-3">
                 <button
                   onClick={handleExport} // ✅ Export Data download
-                  disabled={isExporting}
+                  disabled={isExportingPO}
                   className={`px-4 py-2 text-white text-xs font-regular rounded-lg flex items-center space-x-2 ${
-                    isExporting 
+                    isExportingPO 
                       ? 'bg-gray-500 cursor-not-allowed' 
                       : 'bg-gray-800 hover:bg-gray-700'
                   }`}
                 >
-                  {isExporting && (
+                  {isExportingPO && (
                     <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                   )}
-                  <span>{isExporting ? 'Exporting...' : 'Export Data'}</span>
+                  <span>{isExportingPO ? 'Exporting...' : 'Export PO Data'}</span>
+                </button>
+                <button
+                  onClick={handleExportHandOver} // ✅ Export Data download
+                  disabled={isExportingHandover}
+                  className={`px-4 py-2 text-white text-xs font-regular rounded-lg flex items-center space-x-2 ${
+                    isExportingHandover 
+                      ? 'bg-gray-500 cursor-not-allowed' 
+                      : 'bg-gray-800 hover:bg-gray-700'
+                  }`}
+                >
+                  {isExportingHandover && (
+                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                  <span>{isExportingHandover ? 'Exporting...' : 'Export Hand Over Data'}</span>
                 </button>
                 <button
                   onClick={() => setIsAddPODialogOpen(true)}
@@ -188,6 +240,58 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, setActiveTab, 
         }}
         data={paperRollData}
       />
+
+      {/* Date Picker Dialog for Handover Export */}
+      {isDatePickerOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <h3 className="text-lg font-semibold mb-4">Select Date Range</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  From Date
+                </label>
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  To Date
+                </label>
+                <input
+                  type="date"
+                  value={toDate}
+                  min={fromDate || undefined}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => {
+                  setIsDatePickerOpen(false);
+                  setFromDate('');
+                  setToDate('');
+                }}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDatePickerSubmit}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Export
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

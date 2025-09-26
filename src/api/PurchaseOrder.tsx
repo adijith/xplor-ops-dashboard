@@ -62,8 +62,13 @@ export const downloadPurchaseOrdersExcel = async (params: any = {}) => {
 };
 
 // Download Handover Details Excel
-export const downloadHandoverDetailsExcel = async () => {
+export const downloadHandoverDetailsExcel = async (from_date?: string, to_date?: string) => {
+  const params: any = {};
+  if (from_date) params.from_date = from_date;
+  if (to_date) params.to_date = to_date;
+  
   const response = await axiosInstance.get("/purchase_orders/handover-details-excel", {
+    params,
     responseType: "blob",
   });
   return response.data;
