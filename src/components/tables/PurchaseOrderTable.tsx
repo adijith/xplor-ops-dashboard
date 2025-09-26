@@ -107,7 +107,7 @@ const PurchaseOrderTable: React.FC<PurchaseOrderTableProps> = ({
               <th className="px-6 py-3 text-left text-xs font-medium text-[#A0AEC0] border-b">
                 Net Rolls
               </th>
-              <th className="px-6 py-3"></th>
+      
             </tr>
           </thead>
           <tbody className="bg-white">
@@ -122,7 +122,7 @@ const PurchaseOrderTable: React.FC<PurchaseOrderTableProps> = ({
                       onChange={(e) =>
                         setFormData({ ...formData, po_no: e.target.value })
                       }
-                      className="border px-2 py-1 rounded"
+                      className="border px-2 py-1 rounded-lg focus:outline-none"
                     />
                   ) : (
                     row.po_no
@@ -141,7 +141,7 @@ const PurchaseOrderTable: React.FC<PurchaseOrderTableProps> = ({
                           purchased_count: Number(e.target.value),
                         })
                       }
-                      className="border px-2 py-1 rounded"
+                      className="border px-2 py-1 rounded-lg focus:outline-none"
                     />
                   ) : (
                     row.purchased_count
@@ -159,7 +159,7 @@ const PurchaseOrderTable: React.FC<PurchaseOrderTableProps> = ({
                           district_id: Number(e.target.value),
                         })
                       }
-                      className="border px-2 py-1 rounded"
+                      className="border px-2 py-1 rounded-lg focus:outline-none"
                     >
                       {districts.map((d) => (
                         <option key={d.id} value={d.id}>
@@ -184,7 +184,7 @@ const PurchaseOrderTable: React.FC<PurchaseOrderTableProps> = ({
                           received_date: e.target.value,
                         })
                       }
-                      className="border px-2 py-1 rounded"
+                      className="border px-2 py-1 rounded-lg focus:outline-none"
                     />
                   ) : (
                     row.received_date
@@ -216,7 +216,7 @@ const PurchaseOrderTable: React.FC<PurchaseOrderTableProps> = ({
                     <div className="flex space-x-2">
                       <button
                         onClick={() => handleSave(row.id)}
-                        className="px-2 py-1 bg-green-500 text-white text-xs rounded"
+                        className="px-2 py-1  bg-gray-800 text-white text-xs rounded"
                         disabled={updatePO.isPending}
                       >
                         OK
