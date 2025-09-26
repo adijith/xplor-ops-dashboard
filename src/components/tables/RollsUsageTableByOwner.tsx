@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getOwnerVehicleUsage } from "../../api/RollsUsage";
+import SkeletonTable from "../skeletons/SkeletonTable";
 
 interface VehicleData {
   vehicle_id: number;
@@ -52,7 +53,7 @@ const RollsUsageTableByOwner: React.FC<RollsUsageTableByOwnerProps> = ({ ownerId
     return <p className="text-center text-gray-500">Select an owner to view vehicle data</p>;
   }
 
-  if (loading) return <p>Loading vehicle usage...</p>;
+  if (loading) return <SkeletonTable rows={6} columns={5} />;
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (

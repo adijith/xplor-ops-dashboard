@@ -3,13 +3,14 @@ import TotalOwnersIcon from "../../assets/icons/total_owners.svg";
 import ReqRollsIcon from "../../assets/icons/req_rolls.svg";
 import NoReqRollsIcon from "../../assets/icons/no-req-rolls.svg";
 import { useRollsUsageSummary } from "../../hooks/UseRollsUsage";
+import SkeletonStatsGrid from "../skeletons/SkeletonStatsGrid";
 
 const StatsCards = () => {
   // ✅ Fetch data from API
   const { data, isLoading, isError } = useRollsUsageSummary();
 
   if (isLoading) {
-    return <p>Loading stats...</p>;
+    return <SkeletonStatsGrid />;
   }
 
   if (isError) {

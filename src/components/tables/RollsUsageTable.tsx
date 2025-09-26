@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ChevronRight } from "lucide-react";
 import { useRollsUsageSummary } from "../../hooks/UseRollsUsage";
+import SkeletonTable from "../skeletons/SkeletonTable";
 
 interface RollsUsageTableProps {
   setActiveTab?: (tab: string) => void;
@@ -44,7 +45,7 @@ const RollsUsageTable: React.FC<RollsUsageTableProps> = ({
   }, []);
 
   
-  if (isLoading) return <p>Loading rolls usage...</p>;
+  if (isLoading) return <SkeletonTable rows={8} columns={6} />;
   if (isError) return <p>Failed to fetch rolls usage</p>;
 
   // ✅ Extract owners from API response

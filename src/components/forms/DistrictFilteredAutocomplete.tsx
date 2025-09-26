@@ -21,7 +21,7 @@ const DistrictFilteredAutocomplete: React.FC<DistrictFilteredAutocompleteProps> 
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const { data } = useRollsUsageSummary();
+  const { data, isLoading } = useRollsUsageSummary();
   const owners = data?.data?.owners || [];
   
   // Memoize filtered owners and owner names to prevent unnecessary re-renders
@@ -97,7 +97,23 @@ const DistrictFilteredAutocomplete: React.FC<DistrictFilteredAutocompleteProps> 
         autoComplete="off"
       />
       
-      {isOpen && filteredOptions.length > 0 && (
+      {isOpen && isLoading && (
+        <div
+          ref={dropdownRef}
+          className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+        >
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div
+              key={index}
+              className="px-3 py-2 text-sm"
+            >
+              <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {isOpen && !isLoading && filteredOptions.length > 0 && (
         <div
           ref={dropdownRef}
           className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
@@ -114,7 +130,7 @@ const DistrictFilteredAutocomplete: React.FC<DistrictFilteredAutocompleteProps> 
         </div>
       )}
       
-      {isOpen && filteredOptions.length === 0 && value && (
+      {isOpen && !isLoading && filteredOptions.length === 0 && value && (
         <div
           ref={dropdownRef}
           className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg"

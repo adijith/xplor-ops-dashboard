@@ -29,6 +29,16 @@ const validateReceivedDate = (value: string): string | null => {
   if (isNaN(date.getTime())) {
     return 'Received Date must be a valid date';
   }
+  
+  // Get current date without time to compare only dates
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  date.setHours(0, 0, 0, 0);
+  
+  if (date < today) {
+    return 'Received Date cannot be in the past';
+  }
+  
   return null;
 };
 
@@ -161,6 +171,7 @@ const AddNewPODialog: React.FC<AddNewPODialogProps> = ({ isOpen, onClose }) => {
         required: true,
         defaultValue: getCurrentDate(),
         validation: validateReceivedDate,
+        min: getCurrentDate(),
       },
     ],
   };

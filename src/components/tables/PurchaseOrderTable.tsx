@@ -4,6 +4,7 @@ import {
   usePurchaseOrders,
   useUpdatePurchaseOrder,
 } from "../../hooks/UsePurchaseOrders";
+import SkeletonTable from "../skeletons/SkeletonTable";
 
 interface PurchaseOrderTableProps {
   searchQuery?: string;
@@ -35,7 +36,7 @@ const PurchaseOrderTable: React.FC<PurchaseOrderTableProps> = ({
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState<any>({});
 
-  if (isLoading) return <p>Loading...</p>;
+  if (isLoading) return <SkeletonTable rows={8} columns={6} />;
   if (isError) return <p>Failed to load purchase orders</p>;
 
   const orders = data?.data?.purchase_orders || [];
