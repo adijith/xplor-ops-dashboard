@@ -148,10 +148,20 @@ const RollsUsageTable: React.FC<RollsUsageTableProps> = ({
                     </span>
                     <span
                       className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full min-w-[80px] justify-center ${getWastageColor(
-                        row.avg_usage_percentage
+                        row.total_tickets_expected > 0
+                          ? Math.round(
+                              (row.total_tickets_printed /
+                                row.total_tickets_expected) * 100
+                            )
+                          : 0
                       )}`}
                     >
-                      Usage: {row.avg_usage_percentage}%
+                      Usage: {
+                        row.total_tickets_expected > 0
+                          ? ((row.total_tickets_printed /
+                                row.total_tickets_expected) * 100).toFixed(2)
+                          : "0.00"
+                      }%
                     </span>
                   </div>
                 </td>

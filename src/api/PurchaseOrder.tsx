@@ -67,6 +67,19 @@ export const downloadHandoverDetailsExcel = async (from_date?: string, to_date?:
   if (from_date) params.from_date = from_date;
   if (to_date) params.to_date = to_date;
   
+  const response = await axiosInstance.get("/purchase_orders/ownerwise-handover-details-excel", {
+    params,
+    responseType: "blob",
+  });
+  return response.data;
+};
+
+
+export const downloadBusWiseDataExcel = async (from_date?: string, to_date?: string) => {
+  const params: any = {};
+  if (from_date) params.from_date = from_date;
+  if (to_date) params.to_date = to_date;
+  
   const response = await axiosInstance.get("/purchase_orders/handover-details-excel", {
     params,
     responseType: "blob",

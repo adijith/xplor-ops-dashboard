@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import AddNewPO from '../forms/AddNewPO';
 import BusWiseDialog from '../forms/BusWiseDialog';
 import PaperRollDialog from '../forms/PaperRollData';
-import { downloadPurchaseOrdersExcel, downloadHandoverDetailsExcel } from '../../api/PurchaseOrder';
+import { downloadPurchaseOrdersExcel, downloadHandoverDetailsExcel, downloadBusWiseDataExcel } from '../../api/PurchaseOrder';
 
 interface TabNavigationProps {
   activeTab: string;
@@ -34,9 +34,11 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, setActiveTab, 
   const [paperRollData, setPaperRollData] = useState<TicketCountData | undefined>();
   const [isExportingPO, setIsExportingPO] = useState(false);
   const [isExportingHandover, setIsExportingHandover] = useState(false);
+  const [isExportingBuswise, setIsExportingBuswise] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+  const [exportMode, setExportMode] = useState<'handover' | 'buswise' | null>(null);
 
   const tabs = [
     { id: 'purchase-order', label: 'Purchase Order' },
@@ -64,24 +66,36 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, setActiveTab, 
       }
     };
 
-    const handleExportHandOver = () => {
-      setIsDatePickerOpen(true);
-    };
+  const handleExportHandOver = () => {
+    setExportMode('handover');
+    setIsDatePickerOpen(true);
+  };
 
-    const handleDatePickerSubmit = async () => {
+  const handleExportBusWise = () => {
+    setExportMode('buswise');
+    setIsDatePickerOpen(true);
+  };
+
+  const handleDatePickerSubmit = async () => {
       if (!fromDate || !toDate) {
         alert("Please select both start and end dates.");
         return;
       }
       
       setIsDatePickerOpen(false);
+    if (exportMode === 'handover') {
       setIsExportingHandover(true);
+    } else if (exportMode === 'buswise') {
+      setIsExportingBuswise(true);
+    }
       try {
-        const blob = await downloadHandoverDetailsExcel(fromDate, toDate);
+      const blob = exportMode === 'handover'
+        ? await downloadHandoverDetailsExcel(fromDate, toDate)
+        : await downloadBusWiseDataExcel(fromDate, toDate);
         const url = window.URL.createObjectURL(new Blob([blob]));
         const link = document.createElement("a");
         link.href = url;
-        link.setAttribute("download", "handover_data.xlsx"); // file name
+      link.setAttribute("download", exportMode === 'handover' ? "handover_data.xlsx" : "bus_wise_data.xlsx"); // file name
         document.body.appendChild(link);
         link.click();
         link.remove();
@@ -89,9 +103,11 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, setActiveTab, 
         console.error("Failed to download Excel:", err);
         alert("Failed to export data. Please try again.");
       } finally {
-        setIsExportingHandover(false);
+      setIsExportingHandover(false);
+      setIsExportingBuswise(false);
         setFromDate('');
         setToDate('');
+      setExportMode(null);
       }
     };
 
@@ -167,7 +183,24 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, setActiveTab, 
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                   )}
-                  <span>{isExportingHandover ? 'Exporting...' : 'Export Hand Over Data'}</span>
+                  <span>{isExportingHandover ? 'Exporting...' : 'Export Owner Wise Hand Over Data'}</span>
+                </button>
+                <button
+                  onClick={handleExportBusWise}
+                  disabled={isExportingBuswise}
+                  className={`px-4 py-2 text-white text-xs font-regular rounded-lg flex items-center space-x-2 ${
+                    isExportingBuswise 
+                      ? 'bg-gray-500 cursor-not-allowed' 
+                      : 'bg-gray-800 hover:bg-gray-700'
+                  }`}
+                >
+                  {isExportingBuswise && (
+                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                  <span>{isExportingBuswise ? 'Exporting...' : 'Export Bus Wise Hand Over Data'}</span>
                 </button>
                 <button
                   onClick={() => setIsAddPODialogOpen(true)}

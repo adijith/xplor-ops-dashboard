@@ -35,8 +35,8 @@ const validateReceivedDate = (value: string): string | null => {
   today.setHours(0, 0, 0, 0);
   date.setHours(0, 0, 0, 0);
   
-  if (date < today) {
-    return 'Received Date cannot be in the past';
+  if (date > today) {
+    return 'Received Date cannot be in the future';
   }
   
   return null;
@@ -171,7 +171,6 @@ const AddNewPODialog: React.FC<AddNewPODialogProps> = ({ isOpen, onClose }) => {
         required: true,
         defaultValue: getCurrentDate(),
         validation: validateReceivedDate,
-        min: getCurrentDate(),
       },
     ],
   };

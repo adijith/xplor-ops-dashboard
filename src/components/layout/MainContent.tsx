@@ -31,7 +31,7 @@ const MainContent: React.FC<MainContentProps> = ({ activeTab, setActiveTab,}) =>
 
   return (
     <main className="flex-1 p-6 overflow-auto bg-[#EBF1FF]">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-8xl mx-auto space-y-6">
         <StatsCards />
         <div className="bg-white rounded-xl overflow-hidden">
           <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} setSearchQuery={setSearchQuery} />
